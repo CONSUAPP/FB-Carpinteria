@@ -25,7 +25,14 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Falta la API Key de Replicate' });
     }
 
-    // Petición a la API de Replicate usando el hash público de SDXL
+    // Reforzamos el prompt para forzar realismo en la arquitectura de carpintería
+    const basePrompt = prompt || "custom modern wooden furniture, interior architecture";
+    const enrichedPrompt = `${basePrompt}, professional architectural rendering, high resolution, photorealistic, 8k, realistic wood textures, natural lighting, modern furniture design by FB Carpinteria`;
+
+    // Prompt negativo estricto para evitar distorsiones o aberraciones visuales
+    const negativePrompt = "distorted, deformed, ugly, blurry, bad anatomy, bad proportions, unnatural wood grain, floating furniture, unrealistic lighting, cartoon, illustration, low quality, artifacts";
+
+    // Petición a la API de Replicate con parámetros de ajuste
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -36,7 +43,10 @@ export default async function handler(req, res) {
         version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
         input: {
           image: imageUrl,
-          prompt: prompt || "modern custom wooden furniture, interior architecture, high quality, photorealistic"
+          prompt: enrichedPrompt,
+          negative_prompt: negativePrompt,
+          guidance_scale: 7.5,        // Ajusta qué tanto caso le hace al prompt (7.5 es el punto óptimo)
+          num_inference_steps: 30     // Pasos de renderizado para mayor detalle (por defecto usa menos)
         }
       }),
     });
