@@ -25,27 +25,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Falta la API Key de Replicate' });
     }
 
-    // Prompt limpio y directo en inglés para evitar alucinaciones visuales
-    const userPrompt = prompt || "modern custom wooden desk and bookshelf";
-    const enrichedPrompt = `photo of a ${userPrompt}, modern custom woodwork, placed in a bright clean living room, high quality interior architecture, photorealistic, 8k, natural daylight, FB Carpinteria design`;
+    // Reforzamos el prompt para FLUX enfocándonos en fotografía de arquitectura real
+    const userPrompt = prompt || "modern custom wooden closet";
+    const enrichedPrompt = `A professional architectural photograph of a ${userPrompt}, custom luxury woodwork by FB Carpinteria, realistic wood grain textures, clean interior design, warm ambient lighting, 8k resolution, shot on 35mm lens, high-end furniture magazine style`;
 
-    // Prompt negativo estándar
-    const negativePrompt = "abstract, pattern repetition, distorted, blurry, low quality, glitch, artifacts, lowres, surreal";
-
-    // Petición con parámetros equilibrados para SDXL
-    const inputConfig = {
-      prompt: enrichedPrompt,
-      negative_prompt: negativePrompt,
-      guidance_scale: 7.0,         // Valor estándar estable para evitar sobre-saturación
-      num_inference_steps: 25      // Suficientes pasos para nitidez sin crear artefactos
-    };
-
-    // Si el usuario sube una imagen válida, usamos prompt_strength adecuado (0.8)
-    if (imageUrl) {
-      inputConfig.image = imageUrl;
-      inputConfig.prompt_strength = 0.8; // 0.8 permite rediseñar el mueble de forma limpia sin romper la imagen
-    }
-
+    // Petición a Replicate utilizando el modelo FLUX.1 [schnell]
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -53,8 +37,14 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-        input: inputConfig
+        version: "black-forest-labs/flux-1-schnell",
+        input: {
+          prompt: enrichedPrompt,
+          num_outputs: 1,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 90
+        }
       }),
     });
 
