@@ -25,14 +25,27 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Falta la API Key de Replicate' });
     }
 
-    // Reforzamos el prompt para forzar un diseño limpio, moderno y minimalista de carpintería
-    const basePrompt = prompt || "custom modern wooden entertainment center, floating minimalist design";
-    const enrichedPrompt = `${basePrompt}, clean luxury interior design, professional architectural rendering, high resolution, photorealistic, 8k, natural soft lighting, modern custom woodwork by FB Carpinteria`;
+    // Prompt limpio y directo en inglés para evitar alucinaciones visuales
+    const userPrompt = prompt || "modern custom wooden desk and bookshelf";
+    const enrichedPrompt = `photo of a ${userPrompt}, modern custom woodwork, placed in a bright clean living room, high quality interior architecture, photorealistic, 8k, natural daylight, FB Carpinteria design`;
 
-    // Prompt negativo agresivo para evitar objetos extraños, decoraciones amorfas o problemas de perspectiva
-    const negativePrompt = "artifacts, strange objects, clocks, radios, clutter, toys, weird decorations in shelves, abstract shapes, deformed structures, bad perspective, floating unwanted elements, messy room, cartoon, illustration, low quality";
+    // Prompt negativo estándar
+    const negativePrompt = "abstract, pattern repetition, distorted, blurry, low quality, glitch, artifacts, lowres, surreal";
 
-    // Petición a la API de Replicate con parámetros calibrados
+    // Petición con parámetros equilibrados para SDXL
+    const inputConfig = {
+      prompt: enrichedPrompt,
+      negative_prompt: negativePrompt,
+      guidance_scale: 7.0,         // Valor estándar estable para evitar sobre-saturación
+      num_inference_steps: 25      // Suficientes pasos para nitidez sin crear artefactos
+    };
+
+    // Si el usuario sube una imagen válida, usamos prompt_strength adecuado (0.8)
+    if (imageUrl) {
+      inputConfig.image = imageUrl;
+      inputConfig.prompt_strength = 0.8; // 0.8 permite rediseñar el mueble de forma limpia sin romper la imagen
+    }
+
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -41,14 +54,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-        input: {
-          image: imageUrl,
-          prompt: enrichedPrompt,
-          negative_prompt: negativePrompt,
-          guidance_scale: 8.0,        // Aumentado a 8.0 para forzar mayor apego al prompt de limpieza
-          num_inference_steps: 35,    // 35 pasos para máxima resolución y nitidez de detalles
-          prompt_strength: 0.55       // Mantiene la estructura base de la foto evitando distorsionar la habitación
-        }
+        input: inputConfig
       }),
     });
 
