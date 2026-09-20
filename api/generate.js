@@ -27,12 +27,12 @@ export default async function handler(req, res) {
 
     // Reforzamos el prompt para forzar realismo en la arquitectura de carpintería
     const basePrompt = prompt || "custom modern wooden furniture, interior architecture";
-    const enrichedPrompt = `${basePrompt}, professional architectural rendering, high resolution, photorealistic, 8k, realistic wood textures, natural lighting, modern furniture design by FB Carpinteria`;
+    const enrichedPrompt = `${basePrompt}, realistic interior design, professional architectural rendering, high resolution, photorealistic, 8k, natural lighting, modern furniture design by FB Carpinteria`;
 
-    // Prompt negativo estricto para evitar distorsiones o aberraciones visuales
-    const negativePrompt = "distorted, deformed, ugly, blurry, bad anatomy, bad proportions, unnatural wood grain, floating furniture, unrealistic lighting, cartoon, illustration, low quality, artifacts";
+    // Prompt negativo estricto para evitar abstracciones y deformaciones de perspectiva
+    const negativePrompt = "abstract, deformed structure, bad perspective, floating furniture, messy room, unrealistic geometry, cartoon, illustration, low quality, artifacts";
 
-    // Petición a la API de Replicate con parámetros de ajuste
+    // Petición a la API de Replicate con parámetros de ajuste e Image-to-Image
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -45,8 +45,9 @@ export default async function handler(req, res) {
           image: imageUrl,
           prompt: enrichedPrompt,
           negative_prompt: negativePrompt,
-          guidance_scale: 7.5,        // Ajusta qué tanto caso le hace al prompt (7.5 es el punto óptimo)
-          num_inference_steps: 30     // Pasos de renderizado para mayor detalle (por defecto usa menos)
+          guidance_scale: 7.5,        // Control de fidelidad al prompt
+          num_inference_steps: 30,    // Calidad del detalle visual
+          prompt_strength: 0.6        // Fuerza del cambio: Mantiene la estructura de la foto base
         }
       }),
     });
